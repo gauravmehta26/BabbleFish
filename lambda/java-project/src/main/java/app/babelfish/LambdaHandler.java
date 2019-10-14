@@ -104,9 +104,9 @@ public class LambdaHandler implements RequestHandler<Input, String> {
 
 		logger.log("Transcript: " + transcript);
 
-		String fileName = "transcript/" + new Date().getTime() + ".txt";
-		PutObjectRequest request = new PutObjectRequest(bucket, fileName, new File(transcript));
-		s3.putObject(request);
+		//String fileName = "transcript/" + new Date().getTime() + ".txt";
+		//PutObjectRequest request = new PutObjectRequest(bucket, fileName, new File(transcript));
+		//s3.putObject(request);
 
 		return transcript;
 	}
@@ -120,7 +120,7 @@ public class LambdaHandler implements RequestHandler<Input, String> {
 		if (targetLanguage.equals("gb")) {
 			targetLanguage = "en";
 		}
-		targetLanguage = "nl";
+		//targetLanguage = "nl";
 		TranslateTextRequest request = new TranslateTextRequest().withText(text)
                 .withSourceLanguageCode(sourceLanguage)
                 .withTargetLanguageCode(targetLanguage);
@@ -176,9 +176,13 @@ public class LambdaHandler implements RequestHandler<Input, String> {
     	
     	if (language.equals("gb") ) {
     		voiceId = VoiceId.Brian;
-    	} 
-    	
-    	if (language.equals("ca") ) {
+    	}
+
+			if (language.equals("nl") ) {
+				voiceId = VoiceId.Brian;
+			}
+
+			if (language.equals("ca") ) {
     		voiceId = VoiceId.Chantal;
     	} 
 

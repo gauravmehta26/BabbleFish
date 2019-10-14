@@ -3,11 +3,11 @@ var awsRegion = 'eu-west-1';
 var requestId;
 
 var source_language = 'en'
-var target_language = 'es'
+var target_language = 'nl'
 
 function babel_select(mode,language) {
   document.getElementById(mode + "_" + language).src = "images/" + language + "2.png";
-
+  //alert(mode + "_" + language + " src:" + "images/" + language + "2.png");
   if (mode == 'source') {
     source_language = language;
   } else {
@@ -26,7 +26,7 @@ function babel_unselect_source() {
 
 function babel_unselect_target() {
   document.getElementById("target_nl").src = "images/nl.png";
-  document.getElementById("target_gb").src = "images/en.png";
+  document.getElementById("target_en").src = "images/en.png";
   // document.getElementById("target_de").src = "https://s3.amazonaws.com/tomash-us-east-1/voice-translator/graphics/flags/de.png";
   // document.getElementById("target_pl").src = "https://s3.amazonaws.com/tomash-us-east-1/voice-translator/graphics/flags/pl.png";
   // document.getElementById("target_es").src = "https://s3.amazonaws.com/tomash-us-east-1/voice-translator/graphics/flags/es.png";
@@ -232,7 +232,7 @@ function uploadAudioRecording(blob) {
          FunctionName : lambdaFunction,
          InvocationType : 'RequestResponse',
          LogType : 'None',
-         Payload: JSON.stringify({"bucket": bucketName, "key": inputKey, "sourceLanguage": source_language, "targetLanguage" : target_language})
+         Payload: JSON.stringify({"bucket": bucketName, "key": inputKey, "sourceLanguage": source_language, "targetLanguage" : "nl"})
       };
 
       lambda.invoke(input, function(err, data) {
