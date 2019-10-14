@@ -18,37 +18,24 @@ function babel_select(mode,language) {
 
 function babel_unselect_source() {
   document.getElementById("source_en").src = "images/en.png";
-  //document.getElementById("source_gb").src = "https://s3.amazonaws.com/tomash-us-east-1/voice-translator/graphics/flags/gb.png";
-  // document.getElementById("source_es").src = "https://s3.amazonaws.com/tomash-us-east-1/voice-translator/graphics/flags/es.png";
-  //document.getElementById("source_ca").src = "https://s3.amazonaws.com/tomash-us-east-1/voice-translator/graphics/flags/ca.png";
-  //document.getElementById("source_fr").src = "https://s3.amazonaws.com/tomash-us-east-1/voice-translator/graphics/flags/fr.png";
 }
 
 function babel_unselect_target() {
   document.getElementById("target_nl").src = "images/nl.png";
   document.getElementById("target_en").src = "images/en.png";
-  // document.getElementById("target_de").src = "https://s3.amazonaws.com/tomash-us-east-1/voice-translator/graphics/flags/de.png";
-  // document.getElementById("target_pl").src = "https://s3.amazonaws.com/tomash-us-east-1/voice-translator/graphics/flags/pl.png";
-  // document.getElementById("target_es").src = "https://s3.amazonaws.com/tomash-us-east-1/voice-translator/graphics/flags/es.png";
-  // document.getElementById("target_ca").src = "https://s3.amazonaws.com/tomash-us-east-1/voice-translator/graphics/flags/ca.png";
-  // document.getElementById("target_fr").src = "https://s3.amazonaws.com/tomash-us-east-1/voice-translator/graphics/flags/fr.png";
-  // document.getElementById("target_ja").src = "https://s3.amazonaws.com/tomash-us-east-1/voice-translator/graphics/flags/ja.png";
-  // document.getElementById("target_ru").src = "https://s3.amazonaws.com/tomash-us-east-1/voice-translator/graphics/flags/ru.png";
-  // document.getElementById("target_it").src = "https://s3.amazonaws.com/tomash-us-east-1/voice-translator/graphics/flags/it.png";
-  // document.getElementById("target_sv").src = "https://s3.amazonaws.com/tomash-us-east-1/voice-translator/graphics/flags/sv.png";
 }
 
 function babel_stop() {
-  document.getElementById("stop_button").src = "https://s3.amazonaws.com/tomash-us-east-1/voice-translator/graphics/stop2.png";
-  document.getElementById("start_button").src = "https://s3.amazonaws.com/tomash-us-east-1/voice-translator/graphics/start.png";
+  document.getElementById("stop_button").src = "images/stop2.png";
+  document.getElementById("start_button").src = "images/start.png";
 
   document.getElementById("stop_button").classList.remove('clickableimage');
   document.getElementById("start_button").classList.add('clickableimage');
 }
 
 function babel_start() {
-  document.getElementById("stop_button").src = "https://s3.amazonaws.com/tomash-us-east-1/voice-translator/graphics/stop.png";
-  document.getElementById("start_button").src = "https://s3.amazonaws.com/tomash-us-east-1/voice-translator/graphics/start2.png";
+  document.getElementById("stop_button").src = "images/stop.png";
+  document.getElementById("start_button").src = "images/start2.png";
 
   document.getElementById("stop_button").classList.add('clickableimage');
   document.getElementById("start_button").classList.remove('clickableimage');
