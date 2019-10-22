@@ -1,39 +1,46 @@
 AWSTemplateFormatVersion: "2010-09-09"
 
+Parameters:
+
+  BucketName:
+    Type: String
+#    Default: babbelfish-app-bucket1
+    Description: The name of the bucket where zip file is placed
+
 Resources:
-  'Fn::Transform':
-    Name: 'AWS::Include'
-    Parameters:
-      Location: s3://babbelfish-app-bucket/BabbleFish/cloudformation/CopySource.yaml
+#  'Fn::Transform':
+#    Name: 'AWS::Include'
+#    Parameters:
+#      Location: s3://babbelfish-app-bucket/BabbleFish/cloudformation/CopySource.yaml
 
-  VoiceTranslatorBucket:
-    Type: AWS::S3::Bucket
-    Properties:
-      AccessControl: PublicRead
-      WebsiteConfiguration:
-        IndexDocument: voice-translator.html
-      CorsConfiguration:
-        CorsRules:
-          - AllowedHeaders: ['*']
-            AllowedMethods: [GET,PUT,POST,HEAD]
-            AllowedOrigins: ['*']
-            Id: myCORSRuleId1
-            MaxAge: '3600'
+#  VoiceTranslatorBucket:
+#    Type: AWS::S3::Bucket
+#    Properties:
+#      AccessControl: PublicRead
+#        WebsiteConfiguration:
+#        IndexDocument: voice-translator.html
+#      CorsConfiguration:
+#        CorsRules:
+#          - AllowedHeaders: ['*']
+#            AllowedMethods: [GET,PUT,POST,HEAD]
+#            AllowedOrigins: ['*']
+#            Id: myCORSRuleId1
+#            MaxAge: '3600'
 
-  VoiceTranslatorBucketPolicy:
-    Type: AWS::S3::BucketPolicy
-    Properties:
-      Bucket: !Ref 'VoiceTranslatorBucket'
-      PolicyDocument:
-        Statement:
-          - Action: ['s3:GetObject']
-            Effect: Allow
-            Principal: "*"
-            Resource:
-              - !Join ['', ['arn:aws:s3:::', !Ref 'VoiceTranslatorBucket', '/*']]
+#  VoiceTranslatorBucketPolicy:
+#    Type: AWS::S3::BucketPolicy
+#    Properties:
+#      Bucket: !Ref BucketName
+#      PolicyDocument:
+#        Statement:
+#          - Action: ['s3:GetObject']
+#            Effect: Allow
+#            Principal: "*"
+#            Resource:
+#              - !Join ['', ['arn:aws:s3:::', !Ref BucketName, '/*']]
 
   VoiceTranslatorLambda:
-    DependsOn: CopyZips #defined in included stack
+#    DependsOn: CopyZips #defined in included stack
     Type: "AWS::Lambda::Function"
     Properties:
       Description: "Handle input audio and transcribe, translate and convert back to audio"
@@ -41,8 +48,8 @@ Resources:
       Role: !GetAtt VoiceTranslatorLambdaRole.Arn
       Code:
         S3Bucket:
-          Ref: 'LambdaZipsBucket' #defined in included stack
-        S3Key: 'BabbleFish/lambda/java-project/target/babel-fish-app-1.0-SNAPSHOT.jar'
+          Ref:  BucketName #defined in included stack
+        S3Key: 'babel-fish-app-1.0-SNAPSHOT.jar'
       Runtime: "java8"
       MemorySize: 1024
       Timeout: 30
@@ -69,15 +76,15 @@ Resources:
               - 'Origin'
             QueryString: false
 #          DefaultTTL: 0
-          TargetOriginId: !Sub 's3-origin-${VoiceTranslatorBucket}'
+          TargetOriginId: !Sub 'S3-babbelfish-app-bucket1'
           ViewerProtocolPolicy: 'redirect-to-https'
         DefaultRootObject: 'index.html'
         Enabled: true
         HttpVersion: 'http1.1'
         IPV6Enabled: false
         Origins:
-          - DomainName: !GetAtt VoiceTranslatorBucket.DomainName
-            Id: !Sub 's3-origin-${VoiceTranslatorBucket}'
+          - DomainName: 'babbelfish-app-bucket1.s3.amazonaws.com'
+            Id: 'S3-babbelfish-app-bucket1'
             S3OriginConfig: {}
         PriceClass: 'PriceClass_All'
     Type: 'AWS::CloudFront::Distribution'
@@ -92,6 +99,7 @@ Resources:
             Principal:
               Service: lambda.amazonaws.com
             Action: "sts:AssumeRole"
+      PermissionsBoundary: !Sub 'arn:aws:iam::${AWS::AccountId}:policy/aab-base-permission-boundary'
       Policies:
         - PolicyName: TranscribeAccess
           PolicyDocument:
@@ -150,7 +158,7 @@ Resources:
                     - ""
                     -
                       - "arn:aws:s3:::"
-                      -  Ref: "VoiceTranslatorBucket"
+                      -  Ref: "BucketName"
                       - "/*"
         - PolicyName: S3LocationAccess
           PolicyDocument:
@@ -186,6 +194,7 @@ Resources:
               Federated: "cognito-identity.amazonaws.com"
             Action:
               - "sts:AssumeRoleWithWebIdentity"
+      PermissionsBoundary: !Sub 'arn:aws:iam::${AWS::AccountId}:policy/aab-base-permission-boundary'
       Policies:
         - PolicyName: "CognitoUnauthorizedPolicy"
           PolicyDocument:
@@ -204,7 +213,7 @@ Resources:
                     - ""
                     -
                       - "arn:aws:s3:::"
-                      -  Ref: "VoiceTranslatorBucket"
+                      -  Ref: "BucketName"
                       - "/*"
 
 Outputs:
@@ -213,7 +222,7 @@ Outputs:
     Value: !Join [ "", [ "https://", !GetAtt CfDistribution.DomainName, "/voice-translator.html" ] ]
   VoiceTranslatorBucket:
     Description: VoiceTranslator S3 Bucket
-    Value: !Ref VoiceTranslatorBucket
+    Value: !Ref BucketName
   IdentityPoolIdOutput:
     Description: IdentityPoolId
     Value: !Ref CognitoIdentityPool

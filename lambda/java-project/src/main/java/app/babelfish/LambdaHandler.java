@@ -99,6 +99,7 @@ public class LambdaHandler implements RequestHandler<Input, String> {
 		
 		s3.getObject(new GetObjectRequest(bucket, key), inputFile);
 
+
 		TranscribeStreamingSynchronousClient synchronousClient = new TranscribeStreamingSynchronousClient(TranscribeStreamingClientWrapper.getClient());
 		String transcript = synchronousClient.transcribeFile(languageCode, inputFile);
 

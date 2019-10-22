@@ -45,12 +45,12 @@ function babel_start() {
 
 
 
-AWS.config.update({
+;AWS.config.update({
   region: awsRegion,
   credentials: new AWS.CognitoIdentityCredentials({
     IdentityPoolId: IdentityPoolId
   })
-});
+})
 
 // S3 object for storing input and output audio
 var s3 = new AWS.S3({
@@ -219,19 +219,19 @@ function uploadAudioRecording(blob) {
          FunctionName : lambdaFunction,
          InvocationType : 'RequestResponse',
          LogType : 'None',
-         Payload: JSON.stringify({"bucket": bucketName, "key": inputKey, "sourceLanguage": source_language, "targetLanguage" : "nl"})
+         Payload: JSON.stringify({"bucket": bucketName, "key": inputKey, "sourceLanguage": source_language, "targetLanguage" : target_language})
       };
 
-      lambda.invoke(input, function(err, data) {
-             if (err) {
-               console.log(err);
-               alert("There was a problem with Lambda function!!! ");
-             } else {
-               var resultUrl = data.Payload.replace(/['"]+/g, '');
-               resetView();
-               document.getElementById('audio-output').innerHTML = '<audio controls autoplay><source src="' + resultUrl + '" type="audio/mpeg"></audio><br/>';
-             }
-          });
+      // lambda.invoke(input, function(err, data) {
+      //   if (err) {
+      //     console.log(err);
+      //     alert("There was a problem with Lambda function!!! ");
+      //   } else {
+      //     var resultUrl = data.Payload.replace(/['"]+/g, '');
+      //     resetView();
+      //     document.getElementById('audio-output').innerHTML = '<audio controls autoplay><source src="' + resultUrl + '" type="audio/mpeg"></audio><br/>';
+      //   }
+      // });
     }
   });
 
