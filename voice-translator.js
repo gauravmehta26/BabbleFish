@@ -1,19 +1,19 @@
 // AWS configuration
-var awsRegion = 'eu-west-1';
+//var awsRegion = 'eu-west-1';
 var requestId;
-
+//var bucketName = 'babbelfish-app-bucket1';
 var source_language = 'en'
 var target_language = 'nl'
 
 function babel_select(mode,language) {
   document.getElementById(mode + "_" + language).src = "images/" + language + "2.png";
-  //alert(mode + "_" + language + " src:" + "images/" + language + "2.png");
+
   if (mode == 'source') {
     source_language = language;
   } else {
     target_language = language;
   }
-
+  //alert("language" + target_language);
 }
 
 function babel_unselect_source() {
@@ -23,6 +23,7 @@ function babel_unselect_source() {
 function babel_unselect_target() {
   document.getElementById("target_nl").src = "images/nl.png";
   document.getElementById("target_en").src = "images/en.png";
+  document.getElementById("target_hi").src = "images/hi.png";
 }
 
 function babel_stop() {
@@ -41,11 +42,7 @@ function babel_start() {
   document.getElementById("start_button").classList.remove('clickableimage');
 }
 
-
-
-
-
-;AWS.config.update({
+AWS.config.update({
   region: awsRegion,
   credentials: new AWS.CognitoIdentityCredentials({
     IdentityPoolId: IdentityPoolId
@@ -205,13 +202,14 @@ function uploadAudioRecording(blob) {
 
   // Create key for S3 object and upload input audio file
   var inputKey = 'input/' + requestId + '.wav'
-
+  console.log(bucketName, awsRegion);
   s3.upload({
     Key: inputKey,
     Body: blob
   }, function(err, data) {
+    console.log(err, data);
     if (err) {
-      return alert('There was an error uploading your recording: ', err.message);
+      return alert('There was an error uploading your recording: ' + err.message);
     } else {
 
       var lambda = new AWS.Lambda({region: awsRegion, apiVersion: '2015-03-31'});
@@ -222,16 +220,17 @@ function uploadAudioRecording(blob) {
          Payload: JSON.stringify({"bucket": bucketName, "key": inputKey, "sourceLanguage": source_language, "targetLanguage" : target_language})
       };
 
-      // lambda.invoke(input, function(err, data) {
-      //   if (err) {
-      //     console.log(err);
-      //     alert("There was a problem with Lambda function!!! ");
-      //   } else {
-      //     var resultUrl = data.Payload.replace(/['"]+/g, '');
-      //     resetView();
-      //     document.getElementById('audio-output').innerHTML = '<audio controls autoplay><source src="' + resultUrl + '" type="audio/mpeg"></audio><br/>';
-      //   }
-      // });
+      lambda.invoke(input, function(err, data) {
+        if (err) {
+          console.log(err);
+          alert("There was a problem with Lambda function!!! ");
+        } else {
+          var resultUrl = data.Payload.replace(/['"]+/g, '');
+          console.log("resulturl:" + resultUrl);
+          resetView();
+          document.getElementById('audio-output').innerHTML = '<audio controls autoplay><source src="' + resultUrl + '" type="audio/mpeg"></audio><br/>';
+        }
+      });
     }
   });
 

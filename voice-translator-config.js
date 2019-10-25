@@ -1,3 +1,4 @@
-var bucketName = 'babelfish-stack-voicetranslatorbucket-1p6tzqsgjtypl';
-var IdentityPoolId = 'eu-west-1:8598d185-b4b6-4b58-a60c-e81454dc4d9f';
-var lambdaFunction = 'babelfish-stack-VoiceTranslatorLambda-I9C9LFVQFCQG';
+var bucketName = 'babbelfish-app-bucket1';
+var IdentityPoolId = 'eu-west-1:90a1d897-d046-447a-87f6-8ec14924a6b0';
+var lambdaFunction = 'babelfishstack-VoiceTranslatorLambda-CDOG76I7H6IU';
+var awsRegion = 'eu-west-1';
