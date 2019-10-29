@@ -27,4 +27,3 @@ aws cloudformation create-stack --stack-name babel-fish-stack  \
   
 
 - Copy the endpoint url from the output of cloudformation stack and open it in browser
-  
