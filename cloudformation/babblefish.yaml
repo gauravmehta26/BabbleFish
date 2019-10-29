@@ -8,87 +8,50 @@ Parameters:
     Description: The name of the bucket where zip file is placed
 
 Resources:
-#  'Fn::Transform':
-#    Name: 'AWS::Include'
-#    Parameters:
-#      Location: s3://babbelfish-app-bucket/BabbleFish/cloudformation/CopySource.yaml
+  VoiceTranslatorBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      AccessControl: BucketOwnerFullControl
+        #WebsiteConfiguration:
+        #IndexDocument: voice-translator.html
+      CorsConfiguration:
+        CorsRules:
+          - AllowedHeaders: ['*']
+            AllowedMethods: [GET,PUT,POST,HEAD]
+            AllowedOrigins: ['*']
+            Id: myCORSRuleId1
+            MaxAge: '3600'
 
-#  VoiceTranslatorBucket:
-#    Type: AWS::S3::Bucket
-#    Properties:
-#      AccessControl: PublicRead
-#        WebsiteConfiguration:
-#        IndexDocument: voice-translator.html
-#      CorsConfiguration:
-#        CorsRules:
-#          - AllowedHeaders: ['*']
-#            AllowedMethods: [GET,PUT,POST,HEAD]
-#            AllowedOrigins: ['*']
-#            Id: myCORSRuleId1
-#            MaxAge: '3600'
+# Bucket Policy to allow Origin Access Identity to get and put objects to private S3 bucket
+  VoiceTranslatorBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref VoiceTranslatorBucket
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Principal:
+              CanonicalUser: !GetAtt CloudfrontoOriginAccessIdentity.S3CanonicalUserId
+            Action: ['s3:GetObject', 's3:GetObjectAcl', 's3:PutObject', 's3:PutObjectAcl']
+            Effect: Allow
+            Resource:
+              - !Join ['', ['arn:aws:s3:::', !Ref VoiceTranslatorBucket, '/*']]
 
-#  VoiceTranslatorBucketPolicy:
-#    Type: AWS::S3::BucketPolicy
-#    Properties:
-#      Bucket: !Ref BucketName
-#      PolicyDocument:
-#        Statement:
-#          - Action: ['s3:GetObject']
-#            Effect: Allow
-#            Principal: "*"
-#            Resource:
-#              - !Join ['', ['arn:aws:s3:::', !Ref BucketName, '/*']]
-
+# Lambda function setup that would use jar present in S3 bucket that would perform all the logic
   VoiceTranslatorLambda:
-#    DependsOn: CopyZips #defined in included stack
     Type: "AWS::Lambda::Function"
     Properties:
       Description: "Handle input audio and transcribe, translate and convert back to audio"
       Handler: "app.babelfish.LambdaHandler::handleRequest"
       Role: !GetAtt VoiceTranslatorLambdaRole.Arn
       Code:
-        S3Bucket:
-          Ref:  BucketName #defined in included stack
+        S3Bucket: !Sub ${BucketName}
         S3Key: 'babel-fish-app-1.0-SNAPSHOT.jar'
       Runtime: "java8"
       MemorySize: 1024
       Timeout: 30
 
-  CfDistribution:
-    Metadata:
-      Comment: 'CloudFront distribution over Voice Translator App - to enable HTTPS'
-    Properties:
-      DistributionConfig:
-        Comment: 'CloudFront distribution over Voice Translator App - to enable HTTPS'
-        DefaultCacheBehavior:
-          AllowedMethods:
-            - 'HEAD'
-            - 'GET'
-          CachedMethods:
-            - 'HEAD'
-            - 'GET'
-          Compress: false
-          DefaultTTL: 86400
-          ForwardedValues:
-            Cookies:
-              Forward: 'none'
-            Headers:
-              - 'Origin'
-            QueryString: false
-#          DefaultTTL: 0
-          TargetOriginId: !Sub 'S3-babbelfish-app-bucket1'
-          ViewerProtocolPolicy: 'redirect-to-https'
-        DefaultRootObject: 'index.html'
-        Enabled: true
-        HttpVersion: 'http1.1'
-        IPV6Enabled: false
-        Origins:
-          - DomainName: 'babbelfish-app-bucket1.s3.amazonaws.com'
-            Id: 'S3-babbelfish-app-bucket1'
-            S3OriginConfig: {}
-        PriceClass: 'PriceClass_All'
-    Type: 'AWS::CloudFront::Distribution'
-
+# Create Lambda role that would allow lambda to use transcribe, translate, polly and S3 services
   VoiceTranslatorLambdaRole:
     Type: "AWS::IAM::Role"
     Properties:
@@ -99,7 +62,6 @@ Resources:
             Principal:
               Service: lambda.amazonaws.com
             Action: "sts:AssumeRole"
-      PermissionsBoundary: !Sub 'arn:aws:iam::${AWS::AccountId}:policy/aab-base-permission-boundary'
       Policies:
         - PolicyName: TranscribeAccess
           PolicyDocument:
@@ -128,14 +90,6 @@ Resources:
                 Action:
                   - "translate:TranslateText"
                 Resource: "*"
-        - PolicyName: TranslateAccess
-          PolicyDocument:
-            Version: "2012-10-17"
-            Statement:
-              - Effect: Allow
-                Action:
-                  - "translate:TranslateText"
-                Resource: "*"
         - PolicyName: PollyAccess
           PolicyDocument:
             Version: "2012-10-17"
@@ -154,12 +108,7 @@ Resources:
                   - "s3:PutObject"
                   - "s3:PutObjectAcl"
                 Resource:
-                  Fn::Join:
-                    - ""
-                    -
-                      - "arn:aws:s3:::"
-                      -  Ref: "BucketName"
-                      - "/*"
+                  Fn::Join: ["",["arn:aws:s3:::", !Ref VoiceTranslatorBucket, "/*"]]
         - PolicyName: S3LocationAccess
           PolicyDocument:
             Version: "2012-10-17"
@@ -168,6 +117,58 @@ Resources:
                 Action:
                   - "s3:GetBucketLocation"
                 Resource: "arn:aws:s3:::*"
+
+# Setup Origin Access Identity that would allow cloud distribution to access private S3
+  CloudfrontoOriginAccessIdentity:
+    Type: AWS::CloudFront::CloudFrontOriginAccessIdentity
+    Properties:
+      CloudFrontOriginAccessIdentityConfig:
+        Comment: 'origin-access-identity-for-s3-bucket'
+
+# Cloud distribution to let users access application front end over internet. Generate url is available
+#  as output parameters
+  CfDistribution:
+    Metadata:
+      Comment: 'CloudFront distribution over Voice Translator App - to enable HTTPS'
+    Properties:
+      DistributionConfig:
+        Comment: 'CloudFront distribution over Voice Translator App - to enable HTTPS'
+        DefaultCacheBehavior:
+          AllowedMethods:
+            - 'HEAD'
+            - 'GET'
+            - 'PUT'
+            - 'POST'
+            - 'OPTIONS'
+            - 'DELETE'
+            - 'PATCH'
+          CachedMethods:
+            - 'HEAD'
+            - 'GET'
+          Compress: false
+          DefaultTTL: 86400
+          ForwardedValues:
+            Cookies:
+              Forward: 'none'
+            Headers:
+              - 'Origin'
+            QueryString: false
+#          DefaultTTL: 0
+          TargetOriginId: !Ref VoiceTranslatorBucket
+          ViewerProtocolPolicy: 'redirect-to-https'
+        DefaultRootObject: 'index.html'
+        Enabled: true
+        HttpVersion: 'http1.1'
+        IPV6Enabled: false
+        Origins:
+          - DomainName: !Join ["",[!Ref VoiceTranslatorBucket, ".s3.amazonaws.com"]]
+            Id: !Ref VoiceTranslatorBucket
+            S3OriginConfig: {
+              OriginAccessIdentity:
+                !Join ["",["origin-access-identity/cloudfront/", !Ref CloudfrontoOriginAccessIdentity]]
+            }
+        PriceClass: 'PriceClass_All'
+    Type: 'AWS::CloudFront::Distribution'
 
 
   CognitoIdentityPool:
@@ -194,7 +195,6 @@ Resources:
               Federated: "cognito-identity.amazonaws.com"
             Action:
               - "sts:AssumeRoleWithWebIdentity"
-      PermissionsBoundary: !Sub 'arn:aws:iam::${AWS::AccountId}:policy/aab-base-permission-boundary'
       Policies:
         - PolicyName: "CognitoUnauthorizedPolicy"
           PolicyDocument:
@@ -213,7 +213,7 @@ Resources:
                     - ""
                     -
                       - "arn:aws:s3:::"
-                      -  Ref: "BucketName"
+                      -  Ref: VoiceTranslatorBucket
                       - "/*"
 
 Outputs:
@@ -222,7 +222,7 @@ Outputs:
     Value: !Join [ "", [ "https://", !GetAtt CfDistribution.DomainName, "/voice-translator.html" ] ]
   VoiceTranslatorBucket:
     Description: VoiceTranslator S3 Bucket
-    Value: !Ref BucketName
+    Value: !Ref VoiceTranslatorBucket
   IdentityPoolIdOutput:
     Description: IdentityPoolId
     Value: !Ref CognitoIdentityPool
